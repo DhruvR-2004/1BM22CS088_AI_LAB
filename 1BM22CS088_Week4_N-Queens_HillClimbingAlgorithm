@@ -1,0 +1,47 @@
+import random
+
+def count_conflicts(board):
+    conflicts = 0
+    n = len(board)
+    for i in range(n):
+        for j in range(i + 1, n):
+            if board[i] == board[j] or abs(board[i] - board[j]) == abs(i - j):
+                conflicts += 1
+    return conflicts
+
+def hill_climb(n):
+    attempts = 0
+    while attempts < 100:  # Limit the number of attempts
+        board = list(range(n))
+        random.shuffle(board)
+
+        while True:
+            conflicts = count_conflicts(board)
+            if conflicts == 0:
+                return board
+            
+            best_board = board[:]
+            best_conflicts = conflicts
+
+            for col in range(n):
+                for row in range(n):
+                    if row != board[col]:
+                        new_board = best_board[:]
+                        new_board[col] = row
+                        new_conflicts = count_conflicts(new_board)
+
+                        if new_conflicts < best_conflicts:
+                            best_conflicts = new_conflicts
+                            best_board = new_board
+
+            if best_conflicts == conflicts:
+                break
+            board = best_board
+        
+        attempts += 1
+    
+    return None
+
+n = int(input("Enter the number of queens: "))
+solution = hill_climb(n)
+print("Solution:", solution) if solution else print("No solution found.")
