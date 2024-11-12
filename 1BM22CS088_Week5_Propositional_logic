@@ -1,0 +1,101 @@
+import itertools
+
+def input_rules():
+    global kb, q
+    kb = input("Enter rule: ")
+    q = input("Enter the Query: ")
+
+def entailment():
+    global kb, q
+
+    # Generate truth assignments efficiently using itertools.product
+    variables = list(variable.keys())
+    truth_assignments = list(itertools.product([True, False], repeat=len(variables)))
+
+    print("*" * 10 + "Truth Table Reference" + "*" * 10)
+    print("kb\tquery")
+    print("*" * 10)
+
+    for assignment in truth_assignments:
+        assignment_dict = dict(zip(variables, assignment))
+        kb_truth_value = evaluate_postfix(to_postfix(kb), assignment_dict)
+        query_truth_value = evaluate_postfix(to_postfix(q), assignment_dict)
+        print(kb_truth_value, query_truth_value)
+        print("-" * 10)
+
+        if kb_truth_value and not query_truth_value:
+            return False
+
+    return True
+
+def is_operand(c):
+    return c.isalpha() and c != 'v'
+
+def is_left_parenthesis(c):
+    return c == '('
+
+def is_right_parenthesis(c):
+    return c == ')'
+
+def is_empty(stack):
+    return len(stack) == 0
+
+def peek(stack):
+    return stack[-1]
+
+def has_less_or_equal_priority(c1, c2):
+    try:
+        return priority[c1] <= priority[c2]
+    except KeyError:
+        return False
+
+def to_postfix(infix):
+    stack = []
+    postfix = ''
+    for c in infix:
+        if is_operand(c):
+            postfix += c
+        elif is_left_parenthesis(c):
+            stack.append(c)
+        elif is_right_parenthesis(c):
+            operator = stack.pop()
+            while not is_left_parenthesis(operator):
+                postfix += operator
+                operator = stack.pop()
+        else:
+            while (not is_empty(stack)) and has_less_or_equal_priority(c, peek(stack)):
+                postfix += stack.pop()
+            stack.append(c)
+    while (not is_empty(stack)):
+        postfix += stack.pop()
+    return postfix
+
+def evaluate_postfix(exp, assignment):
+    stack = []
+    for char in exp:
+        if char.isalpha():
+            stack.append(assignment[char])
+        elif char == '~':
+            val1 = stack.pop()
+            stack.append(not val1)
+        elif char in ['^', 'v']:
+            val1 = stack.pop()
+            val2 = stack.pop()
+            if char == '^':
+                stack.append(val2 and val1)
+            elif char == 'v':
+                stack.append(val2 or val1)
+        else:
+            raise ValueError("Invalid character in expression")
+    return stack.pop()
+
+# Global variables
+variable = {'p': 0, 'q': 1, 'r': 2}
+priority = {'~': 3, 'v': 1, '^': 2}
+
+input_rules()
+ans = entailment()
+if ans:
+    print("The Knowledge Base entails query")
+else:
+    print("The Knowledge Base does not entail query")
